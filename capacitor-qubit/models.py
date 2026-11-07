@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import ArrayLike
 
 class DebyeCapacitor:
     '''
@@ -36,21 +37,53 @@ class DebyeCapacitor:
         self.del_c = del_c
         self.tau = tau
 
-    def computeCapacitance(self, f : float | np.ndarray):
+    def computeCapacitance(self, f : ArrayLike):
         '''Return the capacitance at drive frequency f.
 
         Parameters
         ----------
         f : float or np.ndarray
-            Frequency in Hz (not kHz, and not angular frequency).
+            Frequency in Hz.
 
         Returns
         -------
         float or np.ndarray
-            C(f), in the same unit as c_inf and del_c. Has the same shape
-            as f.
+            C(f), in the same unit as c_inf and del_c. 
         '''
 
         denom = 1 + ((2 * np.pi * f) ** 2) * (self.tau ** 2)
 
         return self.c_inf + self.del_c / denom
+    
+
+class ColeColeCapacitor:
+    def __init__(
+            self,
+            c_inf : float,
+            del_c : float,
+            tau : float,
+            alpha : float
+    ) :
+        self.c_inf = c_inf
+        self.del_c = del_c
+        self.tau = tau
+        self.alpha = alpha
+    
+    def computeCapacitance(self, f: ArrayLike):
+        '''Return the capacitance at drive frequency f, factoring in the broadening exponent alpha.
+
+        Parameters
+        ----------
+        f : float or np.ndarray
+            Frequency in Hz.
+
+        Returns
+        -------
+        float or np.ndarray
+            C(f), in the same unit as c_inf and del_c.
+        '''
+        w = 2 * np.pi * np.asarray(f, dtype=float)
+
+        z = (1j * w * self.tau) ** (1 - self.alpha)
+
+        return self.c_inf + np.real(self.del_c / (1 + z))
